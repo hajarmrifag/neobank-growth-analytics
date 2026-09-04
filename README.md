@@ -8,6 +8,8 @@ The project models the customer journey from acquisition and KYC through account
 
 ![Neobank analytics dashboard](docs/dashboard-preview.png)
 
+**Live dashboard:** https://neobank-growth-analytics-hajar.streamlit.app/
+
 ## Project overview
 
 This project answers a set of practical product and growth questions:
