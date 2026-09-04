@@ -1,0 +1,3 @@
+variant,assigned_customers,activated_customers,activation_rate_pct,total_incentive_cost_gbp,avg_margin_before_incentive_gbp,avg_margin_after_incentive_gbp
+bonus_10,25081,18340,73.12,183400.00,2.48,-7.52
+control,24919,17202,69.03,0.00,2.47,2.47

@@ -1,0 +1,6 @@
+acquisition_channel,signups,funded_customers,signup_to_funding_pct,acquisition_spend_gbp,cac_gbp,cost_per_funded_customer_gbp,avg_transaction_volume_gbp,avg_contribution_margin_gbp
+referral,8052,6331,78.63,184231.98,22.88,29.10,1591.61,2.85
+organic,13922,10325,74.16,27910.62,2.00,2.70,1461.95,2.58
+paid_search,11924,8394,70.40,452084.37,37.91,53.86,1383.19,2.46
+affiliate,6003,4026,67.07,242802.14,40.45,60.31,1294.65,2.26
+paid_social,10099,6466,64.03,411094.94,40.71,63.58,1202.12,2.10

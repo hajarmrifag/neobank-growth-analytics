@@ -1,0 +1,6 @@
+transaction_type,completed_transactions,transaction_volume_gbp,revenue_gbp,processing_cost_gbp,contribution_margin_gbp,avg_margin_per_transaction_gbp
+card_payment,545143,17729252.08,115239.34,37504.56,77734.78,0.1426
+fx_exchange,91240,8811694.28,35247.32,2737.20,32510.12,0.3563
+cash_in,35542,2984376.13,0.00,710.84,-710.84,-0.0200
+bank_transfer,131807,17137950.56,3692.50,5272.28,-1579.78,-0.0120
+cash_withdrawal,57945,3103490.53,385.00,20280.75,-19895.75,-0.3434
