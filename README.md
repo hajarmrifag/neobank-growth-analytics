@@ -6,6 +6,8 @@ The project models the customer journey from acquisition and KYC through account
 
 > **Note:** all customer, transaction and marketing data in this repository is synthetic and was generated for portfolio analysis.
 
+![Neobank analytics dashboard](docs/dashboard-preview.png)
+
 ## Project overview
 
 This project answers a set of practical product and growth questions:
