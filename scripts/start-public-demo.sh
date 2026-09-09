@@ -4,7 +4,7 @@ export PGDATA=/tmp/banking-demo-pg
 mkdir -p /tmp/banking-demo-socket
 chmod 700 /tmp/banking-demo-socket
 if [ ! -s "$PGDATA/PG_VERSION" ]; then
-    initdb -D "$PGDATA" --auth-local=trust --auth-host=reject --no-locale >/dev/null
+    initdb -D "$PGDATA" --auth-local=trust --auth-host=reject --no-locale --encoding=UTF8 >/dev/null
 fi
 pg_ctl -D "$PGDATA" -o "-c listen_addresses='' -c unix_socket_directories='/tmp/banking-demo-socket' -c shared_buffers=32MB -c max_connections=40" -w start
 api_pid=''
