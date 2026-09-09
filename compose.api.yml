@@ -1,0 +1,32 @@
+# Dedicated local simulation database, separate from the analytics database.
+name: neobank-banking-api
+services:
+  banking-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: banking_demo
+      POSTGRES_USER: banking_demo
+      POSTGRES_PASSWORD: ${BANKING_DEMO_PASSWORD:?Initialize .env.api first}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - banking_demo_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U banking_demo -d banking_demo"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+  banking-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      BANKING_DATABASE_URL: postgresql://banking_demo:${BANKING_DEMO_PASSWORD}@banking-db:5432/banking_demo
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      banking-db:
+        condition: service_healthy
+    command: ["sh", "-c", "python -m banking_api.db && uvicorn banking_api.main:app --host 0.0.0.0 --port 8000"]
+volumes:
+  banking_demo_data:

@@ -1,0 +1,1 @@
+"""Simulated banking transaction API."""

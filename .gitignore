@@ -1,4 +1,6 @@
 .venv/
+.venv-api/
+.pytest_cache/
 __pycache__/
 *.pyc
 .env
@@ -9,3 +11,5 @@ data/processed/*
 
 !data/processed/dashboard/
 !data/processed/dashboard/*.csv
+
+.env.api

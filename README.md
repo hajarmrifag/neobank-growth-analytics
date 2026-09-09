@@ -1,5 +1,28 @@
 # Neobank Growth & Unit Economics Analytics
 
+## Banking transaction API extension
+
+The project now includes a **Python/FastAPI + PostgreSQL transaction API** for
+simulated GBP accounts, balances, atomic transfers, idempotent retries and paginated
+transaction history. It includes database concurrency/rollback tests, Docker setup,
+GitHub Actions and a reproducible query-index benchmark.
+
+```bash
+python3 scripts/init-api-env.py
+docker compose --env-file .env.api -f compose.api.yml up -d --build
+```
+
+Open [interactive API docs](http://localhost:8000/docs).
+See the [API guide](docs/banking-api.md) for examples, tests and design decisions.
+This is a local simulation using synthetic funds, without authentication or real
+payments. The analytics dashboard and its dataset remain a separate component.
+
+For public hosting, `Dockerfile.demo` enables isolated anonymous sessions, automatic
+expiry, request/body limits and per-session quotas. It includes a guided browser
+demo and disposable PostgreSQL 16 storage. See [public deployment](docs/public-demo.md).
+
+---
+
 End-to-end fintech product analytics project built on a fully synthetic neobank dataset.
 
 The project models the customer journey from acquisition and KYC through account opening, funding, transactions, retention, experimentation and unit economics. It combines Python, PostgreSQL, SQL, statistical testing and an interactive Streamlit dashboard.

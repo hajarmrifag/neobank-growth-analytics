@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: neobank-transactions-hajar
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.demo
+    healthCheckPath: /health
+    envVars:
+      - key: BANKING_PUBLIC_DEMO
+        value: "1"
