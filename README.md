@@ -1,37 +1,28 @@
 # Neobank Growth & Unit Economics Analytics
 
-## Banking transaction API extension
+[![CI](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/ci.yml)
+[![Banking API tests](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/banking-api.yml/badge.svg)](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/banking-api.yml)
+[![Live dashboard](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://neobank-growth-analytics-hajar.streamlit.app/)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-The project now includes a **Python/FastAPI + PostgreSQL transaction API** for
-simulated GBP accounts, balances, atomic transfers, idempotent retries and paginated
-transaction history. It includes database concurrency/rollback tests, Docker setup,
-GitHub Actions and a reproducible query-index benchmark.
-
-```bash
-python3 scripts/init-api-env.py
-docker compose --env-file .env.api -f compose.api.yml up -d --build
-```
-
-Open [interactive API docs](http://localhost:8000/docs).
-See the [API guide](docs/banking-api.md) for examples, tests and design decisions.
-This is a local simulation using synthetic funds, without authentication or real
-payments. The analytics dashboard and its dataset remain a separate component.
-
-For public hosting, `Dockerfile.demo` enables isolated anonymous sessions, automatic
-expiry, request/body limits and per-session quotas. It includes a guided browser
-demo and disposable PostgreSQL 16 storage. See [public deployment](docs/public-demo.md).
-
----
-
-End-to-end fintech product analytics project built on a fully synthetic neobank dataset.
-
-The project models the customer journey from acquisition and KYC through account opening, funding, transactions, retention, experimentation and unit economics. It combines Python, PostgreSQL, SQL, statistical testing and an interactive Streamlit dashboard.
+End-to-end fintech product analytics on a fully synthetic neobank dataset. It models the customer journey from acquisition and KYC through account opening, funding, transactions, retention, experimentation and unit economics, using Python, PostgreSQL, SQL, statistical testing and an interactive Streamlit dashboard.
 
 > **Note:** all customer, transaction and marketing data in this repository is synthetic and was generated for portfolio analysis.
 
 ![Neobank analytics dashboard](docs/dashboard-preview.png)
 
-**Live dashboard:** https://neobank-growth-analytics-hajar.streamlit.app/
+**[Live dashboard](https://neobank-growth-analytics-hajar.streamlit.app/)**
+
+## At a glance
+
+- Referral customers convert best (78.6% signup to funding); organic is the cheapest channel at £2.70 per funded customer.
+- Retention is stable at roughly 77-79% across fully observed cohorts.
+- Card payments and FX earn the margin; cash withdrawals lose £19.9K.
+- A £10 activation bonus lifts activation by +4.09 pp (p < 10⁻²³) but **does not pay back**: break-even needs ~£178.72 of margin per incremental activation against £2.47 observed.
+
+**Contents:** [Questions](#project-overview) · [Dataset](#dataset) · [Findings](#key-findings) · [Experiment](#experiment-10-activation-incentive) · [Dashboard](#dashboard) · [Quick start](#quick-start) · [Testing](#testing-and-quality) · [Methodology](#methodology-notes) · [Banking API](#banking-transaction-api-extension)
 
 ## Project overview
 
@@ -66,33 +57,26 @@ The synthetic dataset contains:
 **SQL:** funnel analysis, cohort retention, segmentation, unit economics  
 **Experimentation:** two-proportion z-test, confidence intervals, break-even analysis  
 **Dashboard:** Streamlit + Plotly  
-**Infrastructure:** Docker Compose  
-**Version control:** Git + GitHub
+**Backend extension:** FastAPI, PostgreSQL, Docker  
+**Quality:** pytest, Ruff, GitHub Actions, Dependabot  
 
 ## Repository structure
 
 ```text
 .
-├── dashboard/
-│   └── app.py
-├── data/
-│   ├── raw/
-│   └── processed/
-│       └── dashboard/
-├── sql/
-│   ├── 00_schema.sql
-│   ├── 01_validation.sql
-│   ├── 02_growth_analysis.sql
-│   └── 03_dashboard_views.sql
-├── src/
-│   ├── generate_core_data.py
-│   ├── generate_transactions.py
-│   ├── load_core_data.py
-│   ├── load_transactions.py
-│   └── experiment_analysis.py
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
+├── src/                 # data generation, loading and experiment analysis
+├── sql/                 # schema, validation, growth analysis, dashboard views
+├── dashboard/app.py     # Streamlit dashboard
+├── data/processed/dashboard/  # CSV extracts served by the dashboard
+├── banking_api/         # FastAPI transaction service (separate component)
+├── tests/
+│   ├── analytics/       # statistics, data-contract and dashboard tests
+│   └── api/             # PostgreSQL-backed API tests
+├── docs/                # API guide, public demo notes, benchmark, screenshot
+├── .github/             # CI workflows and Dependabot
+├── docker-compose.yml   # analytics PostgreSQL
+├── compose.api.yml      # API + its own PostgreSQL
+└── pyproject.toml       # Ruff and pytest configuration
 ```
 
 ## Key findings
@@ -205,85 +189,41 @@ streamlit run dashboard/app.py
 
 ## Quick start
 
-### 1. Create the environment
+Requires Python 3.12+ and Docker.
 
 ```bash
-python3 -m venv .venv
+make install                      # creates .venv and installs everything
 source .venv/bin/activate
-pip install -r requirements.txt
+cp .env.example .env              # local-only database credentials
+docker compose up -d              # PostgreSQL 16
 ```
 
-### 2. Configure environment variables
+Build the database and reproduce every published result:
 
 ```bash
-cp .env.example .env
-```
+docker compose exec -T postgres psql -U neobank_user -d neobank_analytics < sql/00_schema.sql
 
-### 3. Start PostgreSQL
+python src/generate_core_data.py && python src/load_core_data.py
+python src/generate_transactions.py && python src/load_transactions.py
 
-```bash
-docker compose up -d
-```
+for f in 01_validation 02_growth_analysis 03_dashboard_views; do
+  docker compose exec -T postgres psql -U neobank_user -d neobank_analytics < sql/$f.sql
+done
 
-### 4. Create the schema
-
-```bash
-docker compose exec -T postgres psql \
-  -U neobank_user \
-  -d neobank_analytics \
-  < sql/00_schema.sql
-```
-
-### 5. Generate and load core data
-
-```bash
-python src/generate_core_data.py
-python src/load_core_data.py
-```
-
-### 6. Generate and load transaction data
-
-```bash
-python src/generate_transactions.py
-python src/load_transactions.py
-```
-
-### 7. Run validation and growth analysis
-
-```bash
-docker compose exec -T postgres psql \
-  -U neobank_user \
-  -d neobank_analytics \
-  < sql/01_validation.sql
-```
-
-```bash
-docker compose exec -T postgres psql \
-  -U neobank_user \
-  -d neobank_analytics \
-  < sql/02_growth_analysis.sql
-```
-
-### 8. Create dashboard views
-
-```bash
-docker compose exec -T postgres psql \
-  -U neobank_user \
-  -d neobank_analytics \
-  < sql/03_dashboard_views.sql
-```
-
-### 9. Run experiment analysis
-
-```bash
-python src/experiment_analysis.py
-```
-
-### 10. Launch the dashboard
-
-```bash
+python src/experiment_analysis.py   # prints the experiment results and decision
 streamlit run dashboard/app.py
 ```
+
+Generation uses fixed seeds, so the numbers in this README are reproducible exactly.
+
+## Testing and quality
+
+```bash
+make test    # analytics tests (no database needed)
+make lint    # Ruff lint + format check
+```
+
+The analytics tests verify the z-test and confidence interval against the published experiment results, check that the dashboard CSVs reconcile with each other (funnel, channel totals, unit economics, retention rates), and render the Streamlit app headlessly. The API suite runs against a real PostgreSQL instance in CI. See the [API guide](docs/banking-api.md).
 
 ## Methodology notes
 
@@ -298,9 +238,23 @@ streamlit run dashboard/app.py
 - FX segmentation is observational and not causal.
 - The experiment is simulated and exists to demonstrate product experimentation and economic decision-making.
 
+## Banking transaction API extension
+
+A separate **FastAPI + PostgreSQL** service simulating GBP accounts, balances, atomic transfers, idempotent retries and paginated transaction history. It includes database concurrency and rollback tests, Docker setup, GitHub Actions and a reproducible query-index benchmark.
+
+```bash
+make api-up
+```
+
+Then open the [interactive API docs](http://localhost:8000/docs) and see the [API guide](docs/banking-api.md) for examples, tests and design decisions.
+
+This is a local simulation using synthetic funds, without authentication or real payments. The analytics dashboard and its dataset remain a separate component.
+
+For public hosting, `Dockerfile.demo` enables isolated anonymous sessions, automatic expiry, request/body limits and per-session quotas, with a guided browser demo and disposable PostgreSQL 16 storage. See [public deployment](docs/public-demo.md).
+
 ## Skills demonstrated
 
-Product analytics • SQL data modelling • Funnel analysis • Cohort retention • Customer segmentation • Growth analytics • Unit economics • A/B testing • Statistical significance testing • Confidence intervals • PostgreSQL • Python • Docker • Streamlit • Plotly
+Product analytics • SQL data modelling • Funnel analysis • Cohort retention • Customer segmentation • Growth analytics • Unit economics • A/B testing • Statistical significance testing • Confidence intervals • PostgreSQL • Python • Docker • FastAPI • CI/CD • Streamlit • Plotly
 
 ## Author
 
