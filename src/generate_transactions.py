@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 SEED = 43
 DATA_DIR = Path("data/raw")
 ANALYSIS_END = pd.Timestamp("2026-08-31 23:59:59")
@@ -24,9 +23,7 @@ CHANNEL_ACTIVITY_MULTIPLIER = {
     "affiliate": 0.92,
 }
 
-TRANSACTION_TYPES = np.array(
-    ["card_payment", "bank_transfer", "fx_exchange", "cash_withdrawal"]
-)
+TRANSACTION_TYPES = np.array(["card_payment", "bank_transfer", "fx_exchange", "cash_withdrawal"])
 TRANSACTION_TYPE_PROBS = np.array([0.66, 0.16, 0.11, 0.07])
 
 MERCHANT_CATEGORIES = np.array(
@@ -120,34 +117,26 @@ def main() -> None:
         parse_dates=["event_ts"],
     )
 
-    base = (
-        accounts
-        .merge(
-            customers[
-                [
-                    "customer_id",
-                    "country_code",
-                    "age",
-                    "acquisition_channel",
-                    "device_os",
-                ]
-            ],
-            on="customer_id",
-            how="left",
-        )
-        .merge(
-            experiments[["customer_id", "variant"]],
-            on="customer_id",
-            how="left",
-        )
+    base = accounts.merge(
+        customers[
+            [
+                "customer_id",
+                "country_code",
+                "age",
+                "acquisition_channel",
+                "device_os",
+            ]
+        ],
+        on="customer_id",
+        how="left",
+    ).merge(
+        experiments[["customer_id", "variant"]],
+        on="customer_id",
+        how="left",
     )
 
     # Baseline activation differs by acquisition channel.
-    activation_probability = (
-        base["acquisition_channel"]
-        .map(CHANNEL_ACTIVATION)
-        .astype(float)
-    )
+    activation_probability = base["acquisition_channel"].map(CHANNEL_ACTIVATION).astype(float)
 
     # The simulated £10 first-funding offer produces a +5 percentage-point lift.
     activation_probability += np.where(
@@ -157,13 +146,9 @@ def main() -> None:
     )
     activation_probability = activation_probability.clip(upper=0.97)
 
-    base["activated"] = (
-        rng.random(len(base)) < activation_probability
-    )
+    base["activated"] = rng.random(len(base)) < activation_probability
 
-    base["days_available"] = (
-        ANALYSIS_END - base["opened_ts"]
-    ).dt.days.clip(lower=1)
+    base["days_available"] = (ANALYSIS_END - base["opened_ts"]).dt.days.clip(lower=1)
 
     # Adds natural customer-to-customer variation in usage intensity.
     customer_activity_noise = rng.lognormal(
@@ -219,9 +204,7 @@ def main() -> None:
         )
 
         first_amount = sample_amount(rng, "cash_in")
-        incentive_cost = (
-            10.0 if row.variant == "bonus_10" else 0.0
-        )
+        incentive_cost = 10.0 if row.variant == "bonus_10" else 0.0
 
         transactions.append(
             [
@@ -269,10 +252,7 @@ def main() -> None:
                 )
             )
 
-            timestamps = (
-                first_funding_ts
-                + pd.to_timedelta(offsets, unit="s")
-            )
+            timestamps = first_funding_ts + pd.to_timedelta(offsets, unit="s")
 
             types = rng.choice(
                 TRANSACTION_TYPES,
@@ -280,7 +260,7 @@ def main() -> None:
                 p=TRANSACTION_TYPE_PROBS,
             )
 
-            for ts, transaction_type in zip(timestamps, types):
+            for ts, transaction_type in zip(timestamps, types, strict=False):
                 status = rng.choice(
                     ["completed", "failed", "reversed"],
                     p=[0.965, 0.025, 0.010],
@@ -318,17 +298,12 @@ def main() -> None:
                     ]
                 )
 
-                if (
-                    status == "completed"
-                    and first_non_funding_completed_ts is None
-                ):
+                if status == "completed" and first_non_funding_completed_ts is None:
                     first_non_funding_completed_ts = ts
 
                 if transaction_type == "card_payment":
                     merchant_country = (
-                        row.country_code
-                        if rng.random() < 0.80
-                        else rng.choice(COUNTRIES)
+                        row.country_code if rng.random() < 0.80 else rng.choice(COUNTRIES)
                     )
 
                     card_details.append(
@@ -371,30 +346,15 @@ def main() -> None:
                     base_currency = row.base_currency
 
                     possible_targets = [
-                        currency
-                        for currency in FX_RATES_TO_GBP
-                        if currency != base_currency
+                        currency for currency in FX_RATES_TO_GBP if currency != base_currency
                     ]
 
-                    target_currency = rng.choice(
-                        possible_targets
-                    )
+                    target_currency = rng.choice(possible_targets)
 
-                    source_amount = (
-                        amount
-                        / FX_RATES_TO_GBP[base_currency]
-                    )
-                    gbp_value = (
-                        source_amount
-                        * FX_RATES_TO_GBP[base_currency]
-                    )
-                    target_amount = (
-                        gbp_value
-                        / FX_RATES_TO_GBP[target_currency]
-                    )
-                    quoted_rate = (
-                        target_amount / source_amount
-                    )
+                    source_amount = amount / FX_RATES_TO_GBP[base_currency]
+                    gbp_value = source_amount * FX_RATES_TO_GBP[base_currency]
+                    target_amount = gbp_value / FX_RATES_TO_GBP[target_currency]
+                    quoted_rate = target_amount / source_amount
 
                     fx_details.append(
                         [
@@ -496,31 +456,15 @@ def main() -> None:
     for filename, dataframe in outputs.items():
         path = DATA_DIR / filename
         dataframe.to_csv(path, index=False)
-        print(
-            f"{filename:30s} "
-            f"{len(dataframe):>10,} rows"
-        )
+        print(f"{filename:30s} {len(dataframe):>10,} rows")
 
-    activated_accounts = int(
-        (base["transaction_count"] > 0).sum()
-    )
+    activated_accounts = int((base["transaction_count"] > 0).sum())
 
     print()
-    print(
-        f"Activated accounts: "
-        f"{activated_accounts:,} / {len(base):,}"
-    )
-    print(
-        f"Activation rate: "
-        f"{100 * activated_accounts / len(base):.2f}%"
-    )
-    print(
-        f"Total transactions: "
-        f"{len(transactions_df):,}"
-    )
-    print(
-        "Transaction data generated successfully."
-    )
+    print(f"Activated accounts: {activated_accounts:,} / {len(base):,}")
+    print(f"Activation rate: {100 * activated_accounts / len(base):.2f}%")
+    print(f"Total transactions: {len(transactions_df):,}")
+    print("Transaction data generated successfully.")
 
 
 if __name__ == "__main__":

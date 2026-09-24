@@ -13,3 +13,5 @@ data/processed/*
 !data/processed/dashboard/*.csv
 
 .env.api
+.ruff_cache/
+data/raw/
