@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -6,9 +7,7 @@ SEED = 42
 N_CUSTOMERS = 50_000
 OUT_DIR = Path("data/raw")
 
-CHANNELS = np.array(
-    ["organic", "paid_search", "paid_social", "referral", "affiliate"]
-)
+CHANNELS = np.array(["organic", "paid_search", "paid_social", "referral", "affiliate"])
 CHANNEL_PROBS = np.array([0.28, 0.24, 0.20, 0.16, 0.12])
 
 COUNTRIES = np.array(["GB", "FR", "DE", "ES", "IT", "NL", "IE"])
@@ -24,26 +23,13 @@ def main() -> None:
     start = pd.Timestamp("2026-01-01")
     end = pd.Timestamp("2026-06-30 23:59:59")
     seconds = int((end - start).total_seconds())
-    signup_ts = start + pd.to_timedelta(
-        rng.integers(0, seconds, size=N_CUSTOMERS), unit="s"
-    )
+    signup_ts = start + pd.to_timedelta(rng.integers(0, seconds, size=N_CUSTOMERS), unit="s")
 
-    acquisition_channel = rng.choice(
-        CHANNELS, size=N_CUSTOMERS, p=CHANNEL_PROBS
-    )
-    country_code = rng.choice(
-        COUNTRIES, size=N_CUSTOMERS, p=COUNTRY_PROBS
-    )
-    age = np.clip(
-        np.rint(rng.normal(32, 9, size=N_CUSTOMERS)), 18, 70
-    ).astype(int)
-    device_os = rng.choice(
-        ["iOS", "Android"], size=N_CUSTOMERS, p=[0.57, 0.43]
-    )
-    referral_code_used = (
-        (acquisition_channel == "referral")
-        | (rng.random(N_CUSTOMERS) < 0.04)
-    )
+    acquisition_channel = rng.choice(CHANNELS, size=N_CUSTOMERS, p=CHANNEL_PROBS)
+    country_code = rng.choice(COUNTRIES, size=N_CUSTOMERS, p=COUNTRY_PROBS)
+    age = np.clip(np.rint(rng.normal(32, 9, size=N_CUSTOMERS)), 18, 70).astype(int)
+    device_os = rng.choice(["iOS", "Android"], size=N_CUSTOMERS, p=[0.57, 0.43])
+    referral_code_used = (acquisition_channel == "referral") | (rng.random(N_CUSTOMERS) < 0.04)
 
     # Hidden synthetic variable used only to create realistic behavioural differences.
     # It is deliberately not exported, so it cannot leak into later analysis/models.
@@ -78,15 +64,9 @@ def main() -> None:
     p_kyc_start = np.clip(0.94 + 0.05 * quality, 0, 0.995)
     started = rng.random(N_CUSTOMERS) < p_kyc_start
 
-    p_approve = np.clip(
-        0.78 + 0.16 * quality + channel_effect, 0.65, 0.98
-    )
+    p_approve = np.clip(0.78 + 0.16 * quality + channel_effect, 0.65, 0.98)
     approved = started & (rng.random(N_CUSTOMERS) < p_approve)
-    rejected = (
-        started
-        & ~approved
-        & (rng.random(N_CUSTOMERS) < 0.55)
-    )
+    rejected = started & ~approved & (rng.random(N_CUSTOMERS) < 0.55)
 
     status = np.where(
         approved,
@@ -94,15 +74,11 @@ def main() -> None:
         np.where(rejected, "rejected", "abandoned"),
     )
 
-    start_delay = pd.to_timedelta(
-        rng.integers(60, 6 * 3600, size=N_CUSTOMERS), unit="s"
-    )
+    start_delay = pd.to_timedelta(rng.integers(60, 6 * 3600, size=N_CUSTOMERS), unit="s")
     kyc_started_ts = pd.Series(signup_ts + start_delay)
     kyc_started_ts.loc[~started] = pd.NaT
 
-    completion_delay = pd.to_timedelta(
-        rng.integers(5 * 60, 48 * 3600, size=N_CUSTOMERS), unit="s"
-    )
+    completion_delay = pd.to_timedelta(rng.integers(5 * 60, 48 * 3600, size=N_CUSTOMERS), unit="s")
     kyc_completed_ts = kyc_started_ts + completion_delay
     kyc_completed_ts.loc[status == "abandoned"] = pd.NaT
 
@@ -137,25 +113,18 @@ def main() -> None:
     approved_idx = np.where(approved)[0]
     account_ids = np.arange(1, len(approved_idx) + 1, dtype=np.int64)
 
-    opened_ts = (
-        pd.Series(kyc_completed_ts.iloc[approved_idx].to_numpy())
-        + pd.to_timedelta(
-            rng.integers(5 * 60, 24 * 3600, size=len(approved_idx)),
-            unit="s",
-        )
+    opened_ts = pd.Series(kyc_completed_ts.iloc[approved_idx].to_numpy()) + pd.to_timedelta(
+        rng.integers(5 * 60, 24 * 3600, size=len(approved_idx)),
+        unit="s",
     )
 
-    premium_probability = np.where(
-        quality[approved_idx] > 0.78, 0.25, 0.08
-    )
+    premium_probability = np.where(quality[approved_idx] > 0.78, 0.25, 0.08)
     plan_tier = np.where(
         rng.random(len(approved_idx)) < premium_probability,
         "premium",
         "standard",
     )
-    base_currency = np.where(
-        country_code[approved_idx] == "GB", "GBP", "EUR"
-    )
+    base_currency = np.where(country_code[approved_idx] == "GB", "GBP", "EUR")
 
     accounts = pd.DataFrame(
         {
@@ -185,7 +154,7 @@ def main() -> None:
     events = []
     event_id = 1
     account_opened_by_customer = dict(
-        zip(accounts["customer_id"], accounts["opened_ts"])
+        zip(accounts["customer_id"], accounts["opened_ts"], strict=False)
     )
 
     for i, customer_id in enumerate(customer_ids):
@@ -217,11 +186,7 @@ def main() -> None:
             event_id += 1
 
         if pd.notna(kyc_completed_ts.iloc[i]):
-            event_name = (
-                "kyc_approved"
-                if status[i] == "approved"
-                else "kyc_rejected"
-            )
+            event_name = "kyc_approved" if status[i] == "approved" else "kyc_rejected"
             events.append(
                 (
                     event_id,
@@ -283,20 +248,14 @@ def main() -> None:
     }
 
     spend_rows = []
-    for month in pd.date_range(
-        "2026-01-01", "2026-06-01", freq="MS"
-    ):
+    for month in pd.date_range("2026-01-01", "2026-06-01", freq="MS"):
         for channel in CHANNELS:
             spend = max(
                 0,
                 spend_base[channel] * rng.normal(1.0, 0.08),
             )
             impressions = int(spend / cpm[channel] * 1_000)
-            clicks = int(
-                impressions
-                * ctr[channel]
-                * rng.normal(1.0, 0.05)
-            )
+            clicks = int(impressions * ctr[channel] * rng.normal(1.0, 0.05))
             spend_rows.append(
                 (
                     month.date(),

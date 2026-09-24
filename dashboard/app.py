@@ -15,8 +15,7 @@ st.set_page_config(
 
 st.title("Neobank Growth & Unit Economics Analytics")
 st.caption(
-    "Synthetic fintech dataset • 50,000 customers • 890K+ transactions • "
-    "Python, SQL, PostgreSQL"
+    "Synthetic fintech dataset • 50,000 customers • 890K+ transactions • Python, SQL, PostgreSQL"
 )
 
 st.info(
@@ -53,9 +52,7 @@ c4.metric(
 )
 
 c5, c6, c7, c8 = st.columns(4)
-signup_to_funding = (
-    float(kpis["funded_customers"]) / float(kpis["total_signups"]) * 100
-)
+signup_to_funding = float(kpis["funded_customers"]) / float(kpis["total_signups"]) * 100
 c5.metric("Signup → funding", f"{signup_to_funding:.1f}%")
 c6.metric("KYC approved", f"{int(kpis['kyc_approved']):,}")
 c7.metric("Transacting customers", f"{int(kpis['transacting_customers']):,}")
@@ -75,9 +72,7 @@ acquisition is dramatically cheaper than paid channels.
 st.header("Acquisition performance")
 
 channels = data["channels"].copy()
-channels["channel"] = (
-    channels["acquisition_channel"].str.replace("_", " ").str.title()
-)
+channels["channel"] = channels["acquisition_channel"].str.replace("_", " ").str.title()
 
 left, right = st.columns(2)
 
@@ -230,16 +225,10 @@ fx_segments = data["fx_segments"].copy()
 fx_retention = data["fx_retention"].copy()
 
 fx_row = fx_segments.loc[fx_segments["customer_segment"] == "FX user"].iloc[0]
-non_fx_row = fx_segments.loc[
-    fx_segments["customer_segment"] == "Non-FX user"
-].iloc[0]
+non_fx_row = fx_segments.loc[fx_segments["customer_segment"] == "Non-FX user"].iloc[0]
 
-fx_ret_row = fx_retention.loc[
-    fx_retention["customer_segment"] == "FX user"
-].iloc[0]
-non_fx_ret_row = fx_retention.loc[
-    fx_retention["customer_segment"] == "Non-FX user"
-].iloc[0]
+fx_ret_row = fx_retention.loc[fx_retention["customer_segment"] == "FX user"].iloc[0]
+non_fx_ret_row = fx_retention.loc[fx_retention["customer_segment"] == "Non-FX user"].iloc[0]
 
 a, b, c = st.columns(3)
 a.metric(
@@ -262,8 +251,7 @@ c.metric(
     "D30 retention",
     f"{fx_ret_row['d30_retention_pct']:.2f}%",
     delta=(
-        f"{fx_ret_row['d30_retention_pct'] - non_fx_ret_row['d30_retention_pct']:.2f} pp "
-        "vs non-FX"
+        f"{fx_ret_row['d30_retention_pct'] - non_fx_ret_row['d30_retention_pct']:.2f} pp vs non-FX"
     ),
 )
 
@@ -287,9 +275,7 @@ st.caption(
 st.header("Transaction economics")
 
 economics = data["economics"].copy()
-economics["transaction_label"] = (
-    economics["transaction_type"].str.replace("_", " ").str.title()
-)
+economics["transaction_label"] = economics["transaction_type"].str.replace("_", " ").str.title()
 
 fig = px.bar(
     economics.sort_values("contribution_margin_gbp", ascending=False),
