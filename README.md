@@ -22,7 +22,7 @@ End-to-end fintech product analytics on a fully synthetic neobank dataset. It mo
 - Card payments and FX earn the margin; cash withdrawals lose £19.9K.
 - A £10 activation bonus lifts activation by +4.09 pp (p < 10⁻²³) but **does not pay back**: break-even needs ~£178.72 of margin per incremental activation against £2.47 observed.
 
-**Contents:** [Questions](#project-overview) · [Dataset](#dataset) · [Findings](#key-findings) · [Experiment](#experiment-10-activation-incentive) · [Dashboard](#dashboard) · [Quick start](#quick-start) · [Testing](#testing-and-quality) · [Methodology](#methodology-notes) · [Banking API](#banking-transaction-api-extension)
+**Contents:** [Questions](#project-overview) · [Dataset](#dataset) · [Findings](#key-findings) · [Experiment](#experiment-10-activation-incentive) · [Recommendations](#recommendations) · [Dashboard](#dashboard) · [Quick start](#quick-start) · [Testing](#testing-and-quality) · [Methodology](#methodology-notes) · [Banking API](#banking-transaction-api-extension)
 
 ## Project overview
 
@@ -168,6 +168,16 @@ Statistical results:
 The incentive produces a statistically significant increase in activation, but the observed short-window economics do not justify launching it at the current £10 level.
 
 > **Statistical significance does not automatically imply economic viability.**
+
+## Recommendations
+
+What the results suggest a growth and product team should do, and what would need testing first:
+
+1. **Rebalance acquisition towards referral and organic.** Referral converts best (78.63%) with the highest average margin (£2.85) at £29.10 per funded customer, versus £53.86-£63.58 for the paid channels. Test whether referral incentives scale before shifting budget, since referral volume is capped by the existing customer base.
+2. **Do not launch the £10 activation bonus as designed.** It needs about £178.72 of margin per incremental activation to break even against £2.47 observed. A smaller or targeted incentive, tested on a longer horizon, is the next experiment.
+3. **Fix cash-withdrawal economics.** It loses £0.34 per transaction (£19.9K in total) because processing cost (£20.3K) dwarfs the £385 of revenue. Options are a fee after a free allowance, or steering users to card payments, which earn £0.14 per transaction.
+4. **Test, do not assume, FX as an engagement lever.** FX users are far more valuable, but the relationship is observational. An experiment nudging non-FX users towards a first exchange would show whether FX adoption is causal.
+5. **Re-evaluate paid channels on a longer window.** Payback within the observed period says little about lifetime value, so cohort LTV should be revisited as more history accrues.
 
 ## Dashboard
 
