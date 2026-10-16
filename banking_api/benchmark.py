@@ -1,7 +1,10 @@
 """Compare history query plans using disposable temporary data only."""
 
 import json
-from statistics import median
+import os
+import platform
+from datetime import UTC, datetime
+from statistics import median, stdev
 
 from banking_api.db import connect
 
@@ -24,12 +27,19 @@ def main():
             WHERE source_account_id = md5('42')::uuid OR destination_account_id = md5('42')::uuid
             ORDER BY created_at DESC, id DESC LIMIT 20 OFFSET 0"""
 
+        result_query = query.replace("EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)", "", 1)
+        expected = conn.execute(result_query).fetchall()
+
         def measure():
             # First execution warms the cache; report median of the next five runs.
             conn.execute(query).fetchone()
             plans = [conn.execute(query).fetchone()["QUERY PLAN"][0] for _ in range(5)]
             return {
                 "median_execution_ms": median(p["Execution Time"] for p in plans),
+                "execution_samples_ms": [p["Execution Time"] for p in plans],
+                "sample_stdev_ms": stdev(p["Execution Time"] for p in plans),
+                "planning_samples_ms": [p["Planning Time"] for p in plans],
+                "explain_plans": plans,
                 "sample_plan": plans[-1],
             }
 
@@ -42,9 +52,20 @@ def main():
         )
         conn.execute("ANALYZE benchmark_transfers")
         after = measure()
+        if conn.execute(result_query).fetchall() != expected:
+            raise AssertionError("indexing changed ordered query results")
         print(
             json.dumps(
                 {
+                    "recorded_at_utc": datetime.now(UTC).isoformat(),
+                    "client_platform": platform.platform(),
+                    "server_cpu_label": os.environ.get("BANKING_BENCHMARK_CPU", "not recorded"),
+                    "server_settings": {
+                        name: conn.execute("SHOW " + name).fetchone()[name]
+                        for name in ("shared_buffers", "work_mem", "jit")
+                    },
+                    "ordered_results_equal": True,
+                    "result_rows": len(expected),
                     "rows": 200000,
                     "accounts": 1000,
                     "runs_per_case": 5,
