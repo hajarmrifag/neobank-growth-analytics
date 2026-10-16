@@ -1,4 +1,4 @@
-# Neobank Growth & Unit Economics Analytics
+# Neobank Transaction API & Growth Analytics
 
 [![CI](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/ci.yml)
 [![Banking API tests](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/banking-api.yml/badge.svg)](https://github.com/hajarmrifag/neobank-growth-analytics/actions/workflows/banking-api.yml)
@@ -10,6 +10,18 @@
 End-to-end fintech product analytics on a fully synthetic neobank dataset. It models the customer journey from acquisition and KYC through account opening, funding, transactions, retention, experimentation and unit economics, using Python, PostgreSQL, SQL, statistical testing and an interactive Streamlit dashboard.
 
 > **Note:** all customer, transaction and marketing data in this repository is synthetic and was generated for portfolio analysis.
+
+## Backend engineering evidence
+
+The separate [transaction API](docs/banking-api.md) implements simulated GBP transfers using integer money, one PostgreSQL transaction, consistent account-lock order and serialized idempotency keys. Start with the [transfer implementation](banking_api/service.py), [real-database concurrency/rollback tests](tests/api/test_transactions.py), and [verification record](docs/engineering-verification.md).
+
+```text
+HTTP validation -> transaction -> idempotency-key lock/check
+                -> ordered account locks -> balance checks
+                -> debit + credit + transfer record -> commit -> response
+```
+
+Matching retry keys replay a committed result; conflicting payloads are rejected. Tests exercise simultaneous spending, duplicate requests, opposite-direction transfers and injected failure after balance updates. This is a portfolio simulator, not a production ledger, payment rail or proof of exactly-once external settlement. The analytics section below is separate and uses synthetic records.
 
 ![Neobank analytics dashboard](docs/dashboard-preview.png)
 
