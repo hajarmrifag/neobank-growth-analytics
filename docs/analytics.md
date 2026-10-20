@@ -32,13 +32,13 @@ The synthetic dataset contains:
 
 ## Tech stack
 
-**Python:** pandas, NumPy, psycopg  
-**Database:** PostgreSQL 16  
-**SQL:** funnel analysis, cohort retention, segmentation, unit economics  
-**Experimentation:** two-proportion z-test, confidence intervals, break-even analysis  
-**Dashboard:** Streamlit + Plotly  
-**Backend extension:** FastAPI, PostgreSQL, Docker  
-**Quality:** pytest, Ruff, GitHub Actions, Dependabot  
+**Python:** pandas, NumPy, psycopg<br>
+**Database:** PostgreSQL 16<br>
+**SQL:** funnel analysis, cohort retention, segmentation, unit economics<br>
+**Experimentation:** two-proportion z-test, confidence intervals, break-even analysis<br>
+**Dashboard:** Streamlit + Plotly<br>
+**Backend extension:** FastAPI, PostgreSQL, Docker<br>
+**Quality:** pytest, Ruff, GitHub Actions, Dependabot<br>
 
 ## Repository structure
 
